@@ -1,0 +1,259 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Scattered Reborn SMP</title>
+<link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+<style>
+/* ========= Base Styles ========= */
+body, html { margin:0; padding:0; font-family:'Press Start 2P', cursive; overflow-x:hidden; color:white; background:black;}
+h1,h2 { margin:0 0 10px 0; }
+section { margin:20px auto; padding:20px; border-radius:12px; max-width:900px; background: rgba(0,0,0,0.85); border:2px solid #ff2222; box-shadow:0 0 25px #ff4444; transition:0.3s; }
+section:hover { transform:scale(1.02); filter:brightness(1.2);}
+button { padding:10px 20px; border:none; border-radius:5px; background:red; color:white; cursor:pointer; font-size:16px; box-shadow:0 0 10px #ff4444; transition:0.2s;}
+button:hover { background:darkred; transform:scale(1.05); box-shadow:0 0 25px #ff7777; }
+a { color:#ff7777; text-decoration:none;} a:hover{color:#ffaaaa;text-shadow:0 0 10px #ff5555;}
+
+/* ========= Void Background ========= */
+#voidCanvas { position:fixed; top:0; left:0; width:100%; height:100%; z-index:-3; background:black; }
+
+/* ========= Lava Sides ========= */
+.lava-side { position:fixed; top:0; width:100px; height:100%; z-index:-2; background:linear-gradient(to bottom,#ff3300 0%,#ff6600 50%,#ff9900 100%); background-size:100% 200%; opacity:0.85; animation: lavaFlow 2s linear infinite; border-radius:0 50% 50% 0; }
+#lava-left { left:0; } #lava-right { right:0; transform:scaleX(-1);}
+@keyframes lavaFlow { 0%{background-position:0 0;} 100%{background-position:0 200%;} }
+
+/* ========= Fire Particles ========= */
+.fire-particle { position:absolute; width:10px; height:10px; background: radial-gradient(circle,#ff6600 0%,#ff3300 70%,transparent 100%); border-radius:50%; pointer-events:none; opacity:0.5; animation: fireRise linear infinite; }
+@keyframes fireRise { 0% { transform:translateY(100vh) scale(0.5); opacity:0.7; } 50% { opacity:0.4; } 100% { transform:translateY(-10vh) scale(1.5); opacity:0; } }
+
+/* ========= Header ========= */
+header { background:rgba(0,0,0,0.85); padding:30px; text-align:center; border-bottom:3px solid #ff5555; box-shadow:0 0 20px red inset; }
+header h1 { font-size:50px; color:#ff4444; text-shadow:0 0 10px red,0 0 20px darkred; }
+
+/* ========= Staff Boxes ========= */
+.staff-box { display:grid; grid-template-columns:repeat(auto-fit,minmax(150px,1fr)); gap:10px; }
+.staff-member { background:#330000; padding:12px; border-radius:8px; text-align:center; border:1px solid #ff4444; display:flex; flex-direction:column; justify-content:center; align-items:center; height:100px; box-sizing:border-box; transition:0.3s; }
+.staff-member:hover { box-shadow:0 0 20px #ff5555; transform:scale(1.05); }
+
+/* ========= Sidebar ========= */
+#sidebar { position:fixed; right:0; top:50px; width:200px; background:rgba(50,0,0,0.9); border-left:2px solid red; padding:10px; color:white; max-height:80vh; overflow-y:auto; z-index:999;}
+#sidebar h3 { text-align:center; color:#ff6666; }
+#sidebar ul { list-style:none; padding-left:0; }
+
+/* ========= Faction Sections ========= */
+.faction { transition:0.3s; border-width:2px; border-style:solid; border-radius:10px; padding:15px; margin-bottom:20px; }
+#pirates { border-color:#00ffff; box-shadow:0 0 25px #00ffff; }
+#merchants { border-color:#9966cc; box-shadow:0 0 25px #9966cc; }
+#shadow { border-color:#ff4444; box-shadow:0 0 25px #ff4444; }
+#mafia { border-color:#222222; box-shadow:0 0 25px #222222; }
+#block-run { border-color:#ff9900; box-shadow:0 0 25px #ff9900; }
+
+/* ========= Modal Login ========= */
+.modal { display:none; position:fixed; z-index:9999; left:0; top:0; width:100%; height:100%; background:rgba(0,0,0,0.95); justify-content:center; align-items:center;}
+.modal-content { background:#330000; padding:30px; border-radius:15px; text-align:center; max-width:400px; border:2px solid #ff5555; }
+input[type=text] { padding:10px; width:80%; margin:10px 0; border-radius:5px; border:1px solid #ff5555; background:black; color:white; }
+
+/* ========= Milestone Message ========= */
+#milestoneMsg { font-size:18px; color:#ffcc00; text-shadow:0 0 5px #ff0000; margin-top:10px; }
+
+</style>
+</head>
+<body>
+
+<!-- Void + Lava + Fire -->
+<canvas id="voidCanvas"></canvas>
+<div class="lava-side" id="lava-left"></div>
+<div class="lava-side" id="lava-right"></div>
+<div id="fire-container"></div>
+
+<header>
+<h1>🔥 Scattered Reborn SMP 🔥</h1>
+<p>Vanilla & Modded Minecraft Survival Server</p>
+<button onclick="openLogin()">Login</button>
+</header>
+
+<div id="sidebar">
+<h3>Currently Logged In</h3>
+<ul id="loggedInList"></ul>
+</div>
+
+<section>
+<h2>🌍 About The Server</h2>
+<p>Scattered Reborn SMP alternates between Vanilla & Modded every 2 months. Upcoming Season: MODDED.</p>
+</section>
+
+<section>
+<h2>🎮 Server Info</h2>
+<p>Server IP:</p>
+<div class="ip-box" id="serverIP">PLAY.YOURSERVERIP.COM</div>
+<br><br>
+<button onclick="copyIP()">Copy IP</button>
+</section>
+
+<section>
+<h2>👑 Server Team</h2>
+<div class="staff-box">
+<div class="staff-member">Owner/Admin<br><b>Shadow</b></div>
+<div class="staff-member">Co-Owner<br><b>Vinny</b></div>
+<div class="staff-member">Moderator<br><b>Tiaan</b></div>
+<div class="staff-member">Member<br><b>Oliver</b></div>
+<div class="staff-member">Member<br><b>Daniel</b></div>
+<div class="staff-member">Member<br><b>Owen</b></div>
+<div class="staff-member">Member<br><b>Eli</b></div>
+</div>
+</section>
+
+<section>
+<h2>📖 Server Lore</h2>
+<p>The Mafia hacker group plagues every season. Shadow, the lone wolf, is exiled to the Badlands. Tiaan commands the largest trading empire. Oliver & Vinny are a duo. Daniel, Eli & Owen share one braincell. Vinny betrayed Tiaan in Year 2 Season 2, disbanding Pirate-Merchant alliance. Shadow Guild controls dimensions and orbital strike cannons. Every season new adventures and alliances shape the world.</p>
+</section>
+
+<section>
+<h2>📜 Rules</h2>
+<p><b>Rules to be added.</b></p>
+</section>
+
+<section>
+<h2>🎥 YouTube</h2>
+<p>Channel: <b>CTVTiaan</b></p>
+<p><a href="https://youtube.com/@ctvtiaan" target="_blank">Visit Channel</a></p>
+</section>
+
+<section>
+<h2>💬 Discord</h2>
+<p>discord.gg/YOURDISCORD</p>
+</section>
+
+<section>
+<h2>🛒 Buy Minecraft</h2>
+<p>Click below to buy your official Minecraft account:</p>
+<a href="https://www.minecraft.net/en-us/store/minecraft-java-edition" target="_blank"><button>Buy Minecraft</button></a>
+</section>
+
+<!-- Factions -->
+<section class="faction" id="pirates">
+<h2>🏴‍☠️ Pirates</h2><p>Members:</p><ul><li>Vinny</li><li>Oliver</li></ul>
+</section>
+<section class="faction" id="merchants">
+<h2>💰 Merchants</h2><p>Members:</p><ul><li>Tiaan</li></ul>
+</section>
+<section class="faction" id="shadow">
+<h2>🩸 Shadow Guild</h2><p>Members:</p><ul><li>Shadow</li></ul>
+</section>
+<section class="faction" id="mafia">
+<h2>🕶️ Mafia</h2><p>Members: Unknown</p>
+</section>
+
+<!-- Block Run -->
+<section class="faction" id="block-run">
+<h2>🟫 Play Block Run!</h2>
+<p>Press <b>Space</b> to jump over obstacles!</p>
+<canvas id="blockCanvas" width="800" height="200" style="background:black; display:block; margin:auto; border:2px solid #ff5555;"></canvas>
+<div id="milestoneMsg"></div>
+<div style="text-align:center; margin-top:10px;">
+<button id="shareBtn" style="display:none;">Share Score</button>
+</div>
+</section>
+
+<!-- Login Modal -->
+<div class="modal" id="loginModal">
+<div class="modal-content">
+<h2>Server Login</h2>
+<p>Enter your username:</p>
+<input type="text" id="username" placeholder="Your Minecraft Name"><br>
+<button onclick="checkLogin()">Login</button>
+<p id="loginResult"></p>
+</div>
+</div>
+
+<script>
+// ========= Void Shadow =========
+const voidCanvas=document.getElementById("voidCanvas");
+const vCtx=voidCanvas.getContext("2d");
+voidCanvas.width=window.innerWidth;
+voidCanvas.height=window.innerHeight;
+let shadow={x:voidCanvas.width/2,y:voidCanvas.height/2,w:60,h:100};
+function drawShadow(){
+    vCtx.clearRect(0,0,voidCanvas.width,voidCanvas.height);
+    // mist effect
+    for(let i=0;i<50;i++){
+        vCtx.fillStyle=`rgba(50,0,50,0.02)`;
+        vCtx.beginPath();
+        vCtx.arc(Math.random()*voidCanvas.width, Math.random()*voidCanvas.height, Math.random()*100+50,0,Math.PI*2);
+        vCtx.fill();
+    }
+    // shadow character
+    vCtx.fillStyle="rgba(20,20,20,0.9)";
+    vCtx.fillRect(shadow.x,shadow.y,shadow.w,shadow.h);
+    vCtx.fillRect(shadow.x+10,shadow.y-40,40,40);
+    // eyes glow
+    const grad1=vCtx.createRadialGradient(shadow.x+20,shadow.y-20,2,shadow.x+20,shadow.y-20,12);
+    grad1.addColorStop(0,"#fff");grad1.addColorStop(1,"rgba(255,255,255,0)");
+    vCtx.fillStyle=grad1;vCtx.fillRect(shadow.x+15,shadow.y-30,10,10);
+    const grad2=vCtx.createRadialGradient(shadow.x+40,shadow.y-20,2,shadow.x+40,shadow.y-20,12);
+    grad2.addColorStop(0,"#fff");grad2.addColorStop(1,"rgba(255,255,255,0)");
+    vCtx.fillStyle=grad2;vCtx.fillRect(shadow.x+35,shadow.y-30,10,10);
+    shadow.y=voidCanvas.height/2 + Math.sin(Date.now()/1000)*50;
+    requestAnimationFrame(drawShadow);
+}
+drawShadow();
+
+// ========= Fire Particles =========
+const fireContainer=document.getElementById("fire-container");
+for(let i=0;i<50;i++){
+    const p=document.createElement("div");
+    p.className="fire-particle";
+    p.style.left=Math.random()*100+"%";
+    p.style.width=(5+Math.random()*12)+"px";
+    p.style.height=p.style.width;
+    p.style.animationDuration=(3+Math.random()*2)+"s";
+    fireContainer.appendChild(p);
+}
+
+// ========= Copy IP =========
+function copyIP(){navigator.clipboard.writeText(document.getElementById("serverIP").innerText); alert("Server IP copied!");}
+
+// ========= Login =========
+function openLogin(){document.getElementById("loginModal").style.display="flex";}
+const serverTeam={"Shadow Guild":["Shadow"],"Merchants":["Tiaan"],"Pirates":["Vinny","Oliver"],"Mafia":["Unknown"]};
+const waitlist=[]; const loggedInUsers=[];
+function checkLogin(){const username=document.getElementById("username").value.trim(); const result=document.getElementById("loginResult");
+if(username===""){result.innerText="Please enter a username!";return;}
+let found=false; for(const guild in serverTeam){ if(serverTeam[guild].includes(username)){ found=true; break; } }
+if(found){ result.innerText="Welcome "+username+"! You are part of the server team."; if(!loggedInUsers.includes(username)) loggedInUsers.push(username); updateSidebar(); setTimeout(()=>{document.getElementById("loginModal").style.display="none";},500);}
+else { if(!waitlist.includes(username)) waitlist.push(username); result.innerText="You are not part of the server team. Added to waitlist.";}}
+function updateSidebar(){const listEl=document.getElementById("loggedInList"); listEl.innerHTML=""; loggedInUsers.forEach(user=>{const li=document.createElement("li");li.textContent=user; listEl.appendChild(li);});}
+
+// ========= Block Run Game =========
+const canvas=document.getElementById("blockCanvas"); const ctx=canvas.getContext("2d");
+let player={x:50,y:150,width:40,height:40,dy:0,gravity:1.2,jumpPower:-15}; 
+let obstacles=[],frame=0,score=0,gameOver=false,milestonesReached=[];
+const milestoneMsg=document.getElementById("milestoneMsg"); const shareBtn=document.getElementById("shareBtn");
+document.addEventListener("keydown",e=>{
+    if(e.code==="Space" && player.y>=150) player.dy=player.jumpPower;
+    if(gameOver){
+        obstacles=[];frame=0;score=0;gameOver=false;player.y=150;player.dy=0;milestonesReached=[];milestoneMsg.innerText="";shareBtn.style.display="none";
+    }
+});
+function updateBlockRun(){
+    if(gameOver){drawBlockRun(); requestAnimationFrame(updateBlockRun); return;}
+    ctx.clearRect(0,0,canvas.width,canvas.height);
+    player.dy+=player.gravity; player.y+=player.dy; if(player.y>150)player.y=150;
+    ctx.fillStyle="#555555"; ctx.fillRect(player.x,player.y,player.width,player.height); ctx.strokeStyle="#999999"; ctx.strokeRect(player.x,player.y,player.width,player.height);
+    if(frame%90===0){obstacles.push({x:canvas.width,y:150,width:10,height:40});}
+    for(let i=0;i<obstacles.length;i++){obstacles[i].x-=6; ctx.save(); ctx.translate(obstacles[i].x+5,obstacles[i].y+20); ctx.rotate(Math.sin(frame/20)*0.2); ctx.fillStyle="#666666"; ctx.fillRect(-3,-20,6,40); ctx.fillStyle="#333333"; ctx.fillRect(-5,10,10,10); ctx.restore();
+    if(player.x<obstacles[i].x+obstacles[i].width && player.x+player.width>obstacles[i].x && player.y<obstacles[i].y+obstacles[i].height && player.y+player.height>obstacles[i].y){gameOver=true;}}
+    obstacles=obstacles.filter(o=>o.x+o.width>0);
+    ctx.fillStyle="white"; ctx.font="16px 'Press Start 2P'"; ctx.fillText("Score: "+score, canvas.width-150,30);
+    if(!gameOver)score++;
+    if(score>=2000 && !milestonesReached.includes(2000)){ milestonesReached.push(2000); milestoneMsg.innerText="🎉 Well Done! Score 2,000 reached!"; shareBtn.style.display="inline-block";}
+    if(score>=20000 && !milestonesReached.includes(20000)){ milestonesReached.push(20000); milestoneMsg.innerText="🏆 Incredible! Score 20,000 reached!"; shareBtn.style.display="inline-block";}
+    frame++; requestAnimationFrame(updateBlockRun);
+}
+function drawBlockRun(){ctx.clearRect(0,0,canvas.width,canvas.height); ctx.fillStyle="#ff0000"; ctx.font="24px 'Press Start 2P'"; ctx.fillText("GAME OVER", canvas.width/2-90,100); ctx.fillStyle="#ffffff"; ctx.font="16px 'Press Start 2P'"; ctx.fillText("Score: "+score, canvas.width/2-40,130);}
+updateBlockRun();
+shareBtn.addEventListener("click",()=>{ const link=window.location.href.split("?")[0]+"?score="+score; prompt("Share this link with your friends to show your Block Run score!",link); });
+
+</script>
+</body>
+</html>
